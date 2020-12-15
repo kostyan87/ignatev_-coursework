@@ -1,3 +1,16 @@
-1) Сделать проверку строки на корректность и записать ее в список
-2) Преобразовать в префиксеую форму записи
-3) Посчитать выражение
+1) Разбить строку на массив
+2) Сделать проверку строки на корректность и записать ее в список
+3) Преобразовать в префиксеую форму записи
+4) Посчитать выражение
+
+if formula_str[i: i + 4] in self._operators:
+   self._formula.append(formula_str[i: i + 4])
+   i = i + 4
+if formula_str[i: i + 3] in self._operators:
+   self._formula.append(formula_str[i: i + 3])
+   i = i + 3
+if formula_str[i: i + 2] in self._operators:
+   self._formula.append(formula_str[i: i + 2])
+   i = i + 2
+if formula_str[i] in self._operators:
+   self._formula.append(formula_str[i])
