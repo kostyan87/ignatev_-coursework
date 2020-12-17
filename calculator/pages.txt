@@ -14,3 +14,10 @@ if formula_str[i: i + 2] in self._operators:
    i = i + 2
 if formula_str[i] in self._operators:
    self._formula.append(formula_str[i])
+
+* Можно использовать словарь для вычисления значения выражений функций
+Например:
+   {'cos' : cos(value)
+    'sin' : sin(value)
+    и тд.
+   }
