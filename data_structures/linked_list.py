@@ -64,7 +64,7 @@ class LinkedList():
          list_elem = self.head
          list_list = []
 
-         for i in range(self.get_size()):
+         for _ in range(self.get_size()):
             list_list.append(list_elem.value)
             list_elem = list_elem.next
          
