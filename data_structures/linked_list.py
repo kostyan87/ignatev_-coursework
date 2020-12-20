@@ -69,3 +69,12 @@ class LinkedList():
             list_elem = list_elem.next
          
          print(list_list)
+
+   def search(self, str):
+
+      list_elem = self.head
+      for i in range(0, self.get_size()):
+         if list_elem.value == str:
+            return i
+         list_elem = list_elem.next
+      return False
