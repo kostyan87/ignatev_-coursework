@@ -8,13 +8,9 @@ class Calculator():
       self.operators = self.get_operators()
       self.functions = self.get_functions()
       self.constants = self.get_constants()
-      if self.check(formula_str) == 'CORRECT':
-         pass#self._formula = self.split_into_array(formula_str)
-      else:
-         self.get_exceptions('exception_str')
-
-   def get_exceptions(self, exception_str):
-      pass
+      self.check_brackets(formula_str)
+      self.check_iter(formula_str)
+      #self._formula = self.split_into_array(formula_str)
 
    def get_operators(self):
       
@@ -69,69 +65,105 @@ class Calculator():
       
       return str_without_spaces
 
-   def check(self, formula_str):
+   def check_iter(self, formula_str):
       '''
-      Проверка введенной формулы на корректность. Здесь же выбрасывается исключение с указанием позиции некорректного ввода.
-      '''
+      Проверка введенной формулы на корректность. Здесь же выбрасывается исключение с указанием позиции некорректного ввода.'''
 
       if len(formula_str) == 0:
          raise Exception('String is empty')
       if formula_str[0] == '-' or formula_str[0] == '(' or formula_str[0].isdigit() or formula_str[0].isalpha():
-         self.check_brackets(formula_str)
-         self.check_symbols(formula_str)
-         self.check_operators(formula_str)
+         
+         i = 0
+         while i < len(formula_str):
+
+            shift = True
+            if formula_str[i].isdigit() or (formula_str[i] == 'p' and formula_str[i + 1] == 'i') or formula_str[i] == 'e':
+
+               i = self.check_digit(formula_str, i)
+               shift = False
+
+               if i >= len(formula_str): break
+               
+               '''Проверка, что далее следует оператор. Учесть, что оператора может и не быть.'''
+
+            elif str(self.operators.search(formula_str[i])).isdigit():
+               
+               if i != len(formula_str) - 1:
+                  if str(self.operators.search(formula_str[i + 1])).isdigit() != 1 and str(self.operators.search(formula_str[i + 1])).isdigit() != 3:
+                     raise Exception(f'OperatorError: second operator {formula_str[i + 1]} at {i + 1} positions')
+
+               '''Проверка, что далее следует число(константа) или функция'''
+            else:
+               pass#self.check_func(formula_str, i)
+
+               '''Проверка, что далее идут скобки. Вызов check рекурсивно для того, что находится в скобках'''
+         
+            if shift: i += 1
+
       else:
          raise Exception('Invalid symbol at 0 positions')
 
-   def check_symbols(self, formula_str):
+   def check_digit(self, formula_str, i):
       
-      i = 0
-      while i < len(formula_str):
+      check_fraction = 0
+      while formula_str[i].isdigit() or formula_str[i] == ',' or formula_str[i] == '.':
 
-         check_shift = True
-         # Проверка на отстутствие некорректного символа на i-ой позиции
-         if formula_str[i].isalpha():   
-            i = self.check_invalid_alphas(formula_str, i)
-            if i > len(formula_str) - 1:
-               break
-            check_shift = False
-         elif not formula_str[i].isdigit() and not str(self.operators.search(formula_str[i])).isdigit():
-            raise Exception(f'Invalid symbol at {i} positions')
-         
-         if check_shift:
-            i += 1
+         if formula_str[i] == ',' or formula_str[i] == '.':
+            if formula_str[i + 1].isdigit():
+               check_fraction += 1
+            else:
+               raise Exception(f'DigitError: invalid {formula_str[i]} at {i} positions')
+            
+         if check_fraction > 1:
+            raise Exception(f'DigitError: second fraction {formula_str[i]} at {i} positions')
 
-
-   def check_invalid_alphas(self, formula_str, i):
-      """
-      Проверка символа(среза) на корректность
-      """
-      if str(self.constants.search(formula_str[i])).isdigit():
-         return i + 1
-      for j in range(2, 5):
-         if str(self.constants.search(formula_str[i: i + j])).isdigit() or str(self.functions.search(formula_str[i: i + j])).isdigit():
-            return i + j
-      raise Exception(f'Invalid symbol at {i} positions') 
-
-   def check_operators(self, formula_str):
-      # Проверка на отстутствие двух подряд операторов
-   '''elif str(self.operators.search(formula_str[i])).isdigit() and self.operators.search(formula_str[i]) > 1:
-      i = i + 1
-      while formula_str[i] == ' ':
          i += 1
-      if i > len(formula_str) - 1:
-         break
-      if str(self.operators.search(formula_str[i])).isdigit() and self.operators.search(formula_str[i]) > and self.operators.search(formula_str[i]) != 3:
-         raise Exception(f'Two operators in a row for {i}-{i + 1} positions')'''
+         if i >= len(formula_str): break
+
+      if i <= len(formula_str) - 1:
+         if (formula_str[i] == 'p' and formula_str[i + 1] == 'i'):
+            if i <= len(formula_str) - 2:
+               if not str(self.operators.search(formula_str[i + 2])).isdigit():
+                  raise Exception(f'DigitError: invalid symbol at {i + 2} positions')
+         if formula_str[i] == 'e':
+            if not str(self.operators.search(formula_str[i + 1])).isdigit():
+               raise Exception(f'DigitError: invalid symbol at {i + 1} positions')
+      
+      #print(formula_str[i])
+      if i <= len(formula_str) - 1:
+         if not str(self.operators.search(formula_str[i])).isdigit() or self.operators.search(formula_str[i]) == 0:
+            raise Exception(f'DigitError: invalid symbol at {i} positions')
+
+      return i
 
    def check_brackets(self, formula_str):
-      """
+      """   
       Проверка на правильную скобочную последовательность
       """
-      pass
+      open_brackets = 0
+      close_brackets = 0
 
-test_str = Calculator('1 + 4 - 5 + 6 + cos(pi / 4)')
+      for i in formula_str:
 
-#test_str = Calculator('cosu67+-*/^-6r6urru7ru7676rsi--nmyu^^^^^muyib    tgctyu,i,yoglnr6u6utrlogr6u6rsqrtpiru+-/67r67*****e-----ur////6u6rur')
+         if i == '(':
+            open_brackets += 1
+         if i == ')':
+            close_brackets += 1
+         if (open_brackets - close_brackets) < 0:
+            raise Exception('BracketsError: more brackets on the right than on the left')
+      
+      if (open_brackets - close_brackets) == 0: pass
+      else: raise Exception('BracketsError: more brackets on the left than on the right')
 
-#test_str = Calculator('cos8894864346845123115487')
+# first tests
+
+#test = Calculator('14+8+58+1+2')
+#test = Calculator('(14+8)-58/1*2')
+#test = Calculator('14+(8+(58+1)+2)')
+#test = Calculator('14^(8^58)+(1)+2h')
+#test = Calculator('4(14+8)-58/1*2')
+#test = Calculator('14g+(8+(58+1)+2)')
+#test = Calculator('14^(8^58)+(1)+2#')
+#test = Calculator('     ')
+#test = Calculator('(14+8)+5ymym8+1+2')
+test = Calculator('(14+8)+(58+)1+2')
