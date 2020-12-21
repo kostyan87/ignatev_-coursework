@@ -23,6 +23,8 @@ class Calculator():
       operators.push_back('*')
       operators.push_back('/')
       operators.push_back('^')
+      operators.push_back('.')
+      operators.push_back(',')
 
       return operators
 
@@ -77,36 +79,138 @@ class Calculator():
          while i < len(formula_str):
 
             shift = True
-            if formula_str[i].isdigit() or (formula_str[i] == 'p' and formula_str[i + 1] == 'i') or formula_str[i] == 'e':
+            if formula_str[i].isdigit():
 
                i = self.check_digit(formula_str, i)
                shift = False
-
-               if i >= len(formula_str): break
                
                '''Проверка, что далее следует оператор. Учесть, что оператора может и не быть.'''
 
             elif str(self.operators.search(formula_str[i])).isdigit():
                
+               if formula_str[i] == '/' and formula_str[i + 1] == '0':
+                  raise Exception(f'OperatorError: division by zero')
+
                if i != len(formula_str) - 1:
-                  if str(self.operators.search(formula_str[i + 1])).isdigit() != 1 and str(self.operators.search(formula_str[i + 1])).isdigit() != 3:
-                     raise Exception(f'OperatorError: second operator {formula_str[i + 1]} at {i + 1} positions')
+                  if str(self.operators.search(formula_str[i + 1])).isdigit():
+                     if self.operators.search(formula_str[i + 1]) != 0 and self.operators.search(formula_str[i + 1]) != 3 and self.operators.search(formula_str[i]) != 1:
+                        raise Exception(f'OperatorError: second operator {formula_str[i + 1]} at {i + 1} positions')
+                     if self.operators.search(formula_str[i + 1]) == 0 and self.operators.search(formula_str[i]) == 1:
+                        raise Exception(f'OperatorError: second operator {formula_str[i + 1]} at {i + 1} positions')
+                     if (formula_str[i + 1] == ',' or formula_str[i + 1] == '.')  and self.operators.search(formula_str[i]) == 1:
+                        raise Exception(f'OperatorError: invalid operator {formula_str[i + 1]} at {i + 1} positions')
+                  elif formula_str[i + 1].isdigit() and self.operators.search(formula_str[i]) == 1:
+                     raise Exception(f'OperatorError: digit {formula_str[i + 1]} after {formula_str[i]} at {i + 1} positions')
 
                '''Проверка, что далее следует число(константа) или функция'''
-            else:
-               pass#self.check_func(formula_str, i)
 
-               '''Проверка, что далее идут скобки. Вызов check рекурсивно для того, что находится в скобках'''
-         
+            elif (formula_str[i] == 'p' and formula_str[i + 1] == 'i') or formula_str[i] == 'e':
+               
+               i = self.check_const(formula_str, i)
+               shift = False
+
+            elif formula_str[i].isalpha():
+
+               i = self.check_func(formula_str, i)
+               shift = False
+               '''Проверка, что далее идут скобки, а за ними'''
+
             if shift: i += 1
 
       else:
          raise Exception('Invalid symbol at 0 positions')
 
+   def check_func(self, formula_str, i):
+
+      current_i = i
+      for j in range(2, 5):
+         if str(self.functions.search(formula_str[i: i + j])).isdigit():
+            i = i + j
+         if i > len(formula_str) - 1:
+            raise Exception(f'FuncError: missing () after the function name at {i} positions')
+      
+      if i == current_i:
+         raise Exception(f'invalid symbol {formula_str[i]} at {i} positions')
+
+      if formula_str[i] != '(': 
+         raise Exception(f'FuncError: missing () after the function name at {i} positions')
+      elif i < len(formula_str):
+         if formula_str[i + 1] == ')':
+            raise Exception(f'FuncError: the brackets are empty {i + 1} positions')
+      else:
+
+         while formula_str[i] != ')':
+            i += 1
+
+         if i < len(formula_str):
+            if formula_str[i + 1] == '(':
+               raise Exception(f'FuncError: there is ( after function at {i + 1} positions')
+            elif formula_str[i + 1] == '.':
+               raise Exception(f'FuncError: there is . after function at {i + 1} positions')
+            elif formula_str[i + 1] == ',':
+               raise Exception(f'FuncError: there is , after function at {i + 1} positions')
+            elif not str(self.operators.search(formula_str[i + 1])).isdigit():
+               raise Exception(f'FuncError: there is no operator at {i + 1} positions')
+
+      return i + 1
+
+   def check_const(self, formula_str, i):
+      
+      if formula_str[i : i + 2] == 'pi':
+
+         if i != 0:
+            if formula_str[i - 1] == ')':
+               raise Exception(f'ConstError: there is ) before pi at {i - 1} positions')
+            elif formula_str[i - 1] == ',':
+               raise Exception(f'ConstError: there is , before pi at {i - 1} positions')
+            elif formula_str[i - 1] == '.':
+               raise Exception(f'ConstError: there is . before pi at {i - 1} positions')
+            elif not str(self.operators.search(formula_str[i - 1])).isdigit():
+               raise Exception(f'ConstError: there is no operator at {i - 1} positions')
+
+         if i < len(formula_str) - 2:
+            if formula_str[i + 2] == '(':
+               raise Exception(f'ConstError: there is ( after pi at {i + 2} positions')
+            elif formula_str[i + 2] == ',':
+               raise Exception(f'ConstError: there is , after pi at {i + 2} positions')
+            elif formula_str[i + 2] == '.':
+               raise Exception(f'ConstError: there is . after pi at {i + 2} positions')
+            elif not str(self.operators.search(formula_str[i + 2])).isdigit():
+               raise Exception(f'ConstError: there is no operator at {i + 2} positions')
+
+         return i + 2
+
+      else:
+
+         if i != 0:
+            if formula_str[i - 1] == ')':
+               raise Exception(f'ConstError: there is ) before e at {i - 1} positions')
+            elif formula_str[i - 1] == ',':
+               raise Exception(f'ConstError: there is , before e at {i - 1} positions')
+            elif formula_str[i - 1] == '.':
+               raise Exception(f'ConstError: there is . before e at {i - 1} positions')
+            elif not str(self.operators.search(formula_str[i - 1])).isdigit():
+               raise Exception(f'ConstError: there is no operator at {i - 1} positions')
+
+         if i < len(formula_str) - 1:
+            if formula_str[i + 1] == '(':
+               raise Exception(f'ConstError: there is ( after e at {i + 1} positions')
+            elif formula_str[i + 1] == ',':
+               raise Exception(f'ConstError: there is , after e at {i + 1} positions')
+            elif formula_str[i + 1] == '.':
+               raise Exception(f'ConstError: there is . after e at {i + 1} positions')
+            elif not str(self.operators.search(formula_str[i + 1])).isdigit():
+               raise Exception(f'ConstError: there is no operator at {i + 1} positions')
+
+         return i + 1
+
    def check_digit(self, formula_str, i):
       
       check_fraction = 0
       while formula_str[i].isdigit() or formula_str[i] == ',' or formula_str[i] == '.':
+
+         if formula_str[i] == '0' and formula_str[i + 1].isdigit():
+            raise Exception(f'DigitError: invalid zero at {i} positions')
 
          if formula_str[i] == ',' or formula_str[i] == '.':
             if formula_str[i + 1].isdigit():
@@ -119,20 +223,12 @@ class Calculator():
 
          i += 1
          if i >= len(formula_str): break
-
+         
       if i <= len(formula_str) - 1:
-         if (formula_str[i] == 'p' and formula_str[i + 1] == 'i'):
-            if i <= len(formula_str) - 2:
-               if not str(self.operators.search(formula_str[i + 2])).isdigit():
-                  raise Exception(f'DigitError: invalid symbol at {i + 2} positions')
-         if formula_str[i] == 'e':
-            if not str(self.operators.search(formula_str[i + 1])).isdigit():
-               raise Exception(f'DigitError: invalid symbol at {i + 1} positions')
-      
-      #print(formula_str[i])
-      if i <= len(formula_str) - 1:
-         if not str(self.operators.search(formula_str[i])).isdigit() or self.operators.search(formula_str[i]) == 0:
-            raise Exception(f'DigitError: invalid symbol at {i} positions')
+         if not str(self.operators.search(formula_str[i])).isdigit():
+            raise Exception(f'DigitError: there is no operator at {i} positions')
+         if self.operators.search(formula_str[i]) == 0:
+            raise Exception(f'DigitError: there is ( after digit at {i} positions')
 
       return i
 
@@ -166,4 +262,5 @@ class Calculator():
 #test = Calculator('14^(8^58)+(1)+2#')
 #test = Calculator('     ')
 #test = Calculator('(14+8)+5ymym8+1+2')
-test = Calculator('(14+8)+(58+)1+2')
+print('((14+8)+4,1*(2,8-e05888*pi)-58+-pi+(pi/0+2*9))'[18])
+test = Calculator('pi/(8)*2*asin(cos(45)*cos(pi/78+9*pi/e-48*cos(48-159*sin(ln(tg(78)*e))))+cos(3*pi)*sin(pi) - ln(e))*e+cos(56)*256')
