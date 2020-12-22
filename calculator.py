@@ -44,13 +44,15 @@ class Calculator():
    def calculate(self):
 
       prefix_notation = self.split_prefix_notation(self.prefix_notation)
+      prefix_notation.print_to_console()
+      print('\n')
 
       stack = Stack()
       list_elem = prefix_notation.tail
 
       for _ in range(prefix_notation.get_size(), 0, -1):
 
-         if list_elem.value.isdigit() or list_elem.value == 'pi' or list_elem.value == 'e':
+         if list_elem.value[0].isdigit() or list_elem.value == 'pi' or list_elem.value == 'e':
 
             if list_elem.value == 'pi':
                stack.push(pi)
@@ -61,12 +63,13 @@ class Calculator():
 
          else:
 
-            if str(self.functions.search(list_elem.value)).isdigit():
+            if (str(self.functions.search(list_elem.value)).isdigit()):
 
                digit = stack.get_top()
                stack.pop()
                stack.push(self.function(list_elem.value, float(digit)))
-            
+               print(stack.get_top())
+
             elif str(self.operators.search(list_elem.value)).isdigit():
 
                digit_1 = stack.get_top()
@@ -75,6 +78,7 @@ class Calculator():
                stack.pop()
 
                stack.push(self.operation(float(digit_1) ,list_elem.value, float(digit_2)))
+               print(stack.get_top())
 
          list_elem = list_elem.prev
 
@@ -134,7 +138,7 @@ class Calculator():
 
             stack.push(list_elem.value)
 
-         elif list_elem.value == 'pi' or list_elem.value == 'e' or list_elem.value.isdigit():
+         elif list_elem.value == 'pi' or list_elem.value == 'e' or list_elem.value[0].isdigit():
 
             if prefix_str == '':
                prefix_str = list_elem.value + prefix_str
@@ -435,7 +439,7 @@ class Calculator():
       check_fraction = 0
       while formula_str[i].isdigit() or formula_str[i] == ',' or formula_str[i] == '.':
 
-         if formula_str[i] == '0' and formula_str[i + 1].isdigit():
+         if formula_str[i] == '0' and formula_str[i + 1].isdigit() and check_fraction == 0:
             raise Exception(f'DigitError: invalid zero at {i} positions')
 
          if formula_str[i] == ',' or formula_str[i] == '.':
@@ -480,11 +484,14 @@ class Calculator():
 
 #test = Calculator('((2+3)*4-(5-6))*(7+8)')
 #test = Calculator('sin(cos(2*3 - ln(e)*4))*5+2*6')
+#test = Calculator('sin(cos(2*3 - ln(3)*4))*5+2*6')
 #test = Calculator('(cos((1-(2+3))*4))^(5+6)')
-#test = Calculator('-cos(3)') - НЕ РАБОТАЕТ
-#test = Calculator('ln(23.1278*e)') - НЕ РАБОТАЕТ
-#test = Calculator('tg(log((log(23.1278 * 4))))') - НЕ РАБОТАЕТ
-#test = Calculator('-cos(-pi+1)*tg(log(ln(23.1278)))/13.0498-sin(3^7)') - НЕ РАБОТАЕТ DigitError: invalid zero at 36 positions
+#test = Calculator('cos(3+5)')
+#test = Calculator('ln(23.1278*e)')#
+#test = Calculator('tg(log((log(23.1278 * 4))))')#
+#test = Calculator('cos(pi+1)*tg(log(ln(23.1278)))/13.0498+sin(3^7)')# - НЕ РАБОТАЕТ DigitError: invalid zero at 36 positions
+#test = Calculator('-8+(-5+(-6))')
+#test = Calculator('cos( pi) * tg( log(log(ln(23.1278* e))))  /   13.0498-sin(3^ 7)')
 
-#print(test)
-#print(test.calculate())
+print(test)
+print(test.calculate())
