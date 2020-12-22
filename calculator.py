@@ -1,4 +1,6 @@
-from math import pi, e
+import sys; sys.path.append(r'.\data_structures')
+from math import pi, e, cos, sin, tan, atan, log1p, log2, sqrt, asin
+from data_structures.stack import Stack
 from data_structures.linked_list import LinkedList
 
 class Calculator():
@@ -8,9 +10,239 @@ class Calculator():
       self.operators = self.get_operators()
       self.functions = self.get_functions()
       self.constants = self.get_constants()
+
       self.check_brackets(formula_str)
-      self.check_iter(formula_str)
-      #self._formula = self.split_into_array(formula_str)
+      self.check_base(formula_str)
+
+      self.formula_list = self.split_into_array(formula_str)
+      self.prefix_notation = self.prefix_conversion(self.formula_list)
+
+   def __str__(self):
+      return self.prefix_notation
+
+   def split_prefix_notation(self, prefix_notation):
+      
+      prefix_notation_list = LinkedList()
+
+      i = 0
+      while i < len(prefix_notation):
+
+         digit = ''
+
+         while prefix_notation[i] != ' ':
+            
+            digit = digit + prefix_notation[i]
+            i += 1
+
+            if i == len(prefix_notation): break
+
+         prefix_notation_list.push_back(digit)
+         i += 1
+
+      return prefix_notation_list
+
+   def calculate(self):
+
+      prefix_notation = self.split_prefix_notation(self.prefix_notation)
+
+      stack = Stack()
+      list_elem = prefix_notation.tail
+
+      for _ in range(prefix_notation.get_size(), 0, -1):
+
+         if list_elem.value.isdigit() or list_elem.value == 'pi' or list_elem.value == 'e':
+
+            if list_elem.value == 'pi':
+               stack.push(pi)
+            elif list_elem.value == 'e':
+               stack.push(e)
+            else:
+               stack.push(list_elem.value)
+
+         else:
+
+            if str(self.functions.search(list_elem.value)).isdigit():
+
+               digit = stack.get_top()
+               stack.pop()
+               stack.push(self.function(list_elem.value, float(digit)))
+            
+            elif str(self.operators.search(list_elem.value)).isdigit():
+
+               digit_1 = stack.get_top()
+               stack.pop()
+               digit_2 = stack.get_top()
+               stack.pop()
+
+               stack.push(self.operation(float(digit_1) ,list_elem.value, float(digit_2)))
+
+         list_elem = list_elem.prev
+
+      return stack.get_top()
+
+   def operation(self, digit_1, operator, digit_2):
+
+      if operator == '+': return digit_1 + digit_2
+      if operator == '/': return digit_1 / digit_2
+      if operator == '*': return digit_1 * digit_2
+      if operator == '-': return digit_1 - digit_2
+      if operator == '^': return digit_1 ** digit_2
+
+   def function(self, function, digit):
+      
+      if function == 'cos': return cos(digit)
+      if function == 'sin': return sin(digit)
+
+      if function == 'tg': 
+         if cos(digit) == 0:
+            raise Exception('tgError: division by zero') 
+         return tan(digit)
+
+      if function == 'ctg':
+         if sin(digit) == 0:
+            raise Exception('ctgError: division by zero') 
+         return cos(digit)/sin(digit)
+
+      if function == 'ln':
+         if digit <= 0:
+            raise Exception('lnError: sub-logarithmic expression is zero') 
+         return log1p(digit)
+
+      if function == 'log':
+         if digit <= 0:
+            raise Exception('logError: sub-logarithmic expression is zero') 
+         return log2(digit)
+
+      if function == 'sqrt':
+         if digit < 0:
+            raise Exception('sqrtError: negative expression under the sqrt') 
+         return sqrt(digit)
+
+      if function == 'asin': return asin(digit)
+
+   def prefix_conversion(self, formula_list):
+      """
+      Преобразование в префиксную форму записи 
+      """
+      prefix_str = ''
+      stack = Stack()
+      list_elem = formula_list.tail
+
+      for _ in range(formula_list.get_size(), 0, -1):
+         
+         if list_elem.value == ')':
+
+            stack.push(list_elem.value)
+
+         elif list_elem.value == 'pi' or list_elem.value == 'e' or list_elem.value.isdigit():
+
+            if prefix_str == '':
+               prefix_str = list_elem.value + prefix_str
+            else:
+               prefix_str = list_elem.value + ' ' + prefix_str
+
+         elif list_elem.value == '(':
+
+            while stack.get_top() != ')':
+
+               if prefix_str == '':
+                  prefix_str = stack.get_top() + prefix_str
+               else:
+                  prefix_str = stack.get_top() + ' ' + prefix_str
+
+               stack.pop()
+               
+            stack.pop()
+
+         elif str(self.operators.search(list_elem.value)).isdigit() or str(self.functions.search(list_elem.value)).isdigit():
+            
+            if stack.stack_list.is_empty():
+
+               stack.push(list_elem.value)
+
+            elif self.get_priority(list_elem.value) > self.get_priority(stack.get_top()):
+
+               stack.push(list_elem.value)
+
+            else:
+
+               while self.get_priority(stack.get_top()) > self.get_priority(list_elem.value):
+
+                  if prefix_str == '':
+                     prefix_str = stack.get_top() + prefix_str
+                  else:
+                     prefix_str = stack.get_top() + ' ' + prefix_str
+
+                  stack.pop()
+
+                  if stack.stack_list.is_empty(): break
+               
+               stack.push(list_elem.value)
+
+         list_elem = list_elem.prev
+
+      while not stack.stack_list.is_empty():
+
+         prefix_str = stack.get_top() + ' ' + prefix_str
+         stack.pop()
+
+      return prefix_str
+
+   def get_priority (self, operator):
+      
+      if str(self.functions.search(operator)).isdigit(): return 3
+
+      if operator == '^': return 3
+      if operator == '*': return 2
+      if operator == '/': return 2
+      if operator == '+': return 1
+      if operator == '-': return 1
+      if operator == '(': return 0
+      if operator == ')': return 0
+
+   def split_into_array(self, formula_str):
+
+      formula_array = LinkedList()
+      i = 0
+
+      while i < len(formula_str):
+         
+         shift = True
+
+         if formula_str[i].isdigit():
+
+            digit_str = ''
+
+            while formula_str[i].isdigit() or formula_str[i] == ',' or formula_str[i] == '.':
+               digit_str = digit_str + formula_str[i]
+               i += 1
+               if i > len(formula_str) - 1 : break
+
+            shift = False
+            formula_array.push_back(digit_str)
+
+         elif str(self.operators.search(formula_str[i])).isdigit():
+
+            formula_array.push_back(formula_str[i])
+
+         elif formula_str[i] == 'e':
+            
+            formula_array.push_back(formula_str[i])
+
+         else:
+
+            for j in range(2, 5):
+               if str(self.functions.search(formula_str[i: i + j])).isdigit() or str(self.constants.search(formula_str[i: i + j])).isdigit():
+                  formula_array.push_back(formula_str[i: i + j])
+                  break
+               if i + j > len(formula_str) - 1: break
+                  
+            shift = False
+            i = i + j
+
+         if shift: i = i + 1
+      
+      return formula_array
 
    def get_operators(self):
       
@@ -52,12 +284,6 @@ class Calculator():
 
       return constants
 
-   '''def __str__(self):
-      return str(self._formula)'''
-
-   def split_into_array(self, formula_str):
-      pass
-
    def delete_spaces(self, formula_str):
       str_without_spaces = ''
 
@@ -67,7 +293,7 @@ class Calculator():
       
       return str_without_spaces
 
-   def check_iter(self, formula_str):
+   def check_base(self, formula_str):
       '''
       Проверка введенной формулы на корректность. Здесь же выбрасывается исключение с указанием позиции некорректного ввода.'''
 
@@ -251,16 +477,14 @@ class Calculator():
       if (open_brackets - close_brackets) == 0: pass
       else: raise Exception('BracketsError: more brackets on the left than on the right')
 
-# first tests
 
-#test = Calculator('14+8+58+1+2')
-#test = Calculator('(14+8)-58/1*2')
-#test = Calculator('14+(8+(58+1)+2)')
-#test = Calculator('14^(8^58)+(1)+2h')
-#test = Calculator('4(14+8)-58/1*2')
-#test = Calculator('14g+(8+(58+1)+2)')
-#test = Calculator('14^(8^58)+(1)+2#')
-#test = Calculator('     ')
-#test = Calculator('(14+8)+5ymym8+1+2')
-print('((14+8)+4,1*(2,8-e05888*pi)-58+-pi+(pi/0+2*9))'[18])
-test = Calculator('pi/(8)*2*asin(cos(45)*cos(pi/78+9*pi/e-48*cos(48-159*sin(ln(tg(78)*e))))+cos(3*pi)*sin(pi) - ln(e))*e+cos(56)*256')
+#test = Calculator('((2+3)*4-(5-6))*(7+8)')
+#test = Calculator('sin(cos(2*3 - ln(e)*4))*5+2*6')
+#test = Calculator('(cos((1-(2+3))*4))^(5+6)')
+#test = Calculator('-cos(3)') - НЕ РАБОТАЕТ
+#test = Calculator('ln(23.1278*e)') - НЕ РАБОТАЕТ
+#test = Calculator('tg(log((log(23.1278 * 4))))') - НЕ РАБОТАЕТ
+#test = Calculator('-cos(-pi+1)*tg(log(ln(23.1278)))/13.0498-sin(3^7)') - НЕ РАБОТАЕТ DigitError: invalid zero at 36 positions
+
+#print(test)
+#print(test.calculate())

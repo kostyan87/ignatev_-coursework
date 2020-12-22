@@ -3,21 +3,30 @@
 3) Преобразовать в префиксеую форму записи
 4) Посчитать выражение
 
-if formula_str[i: i + 4] in self._operators:
-   self._formula.append(formula_str[i: i + 4])
-   i = i + 4
-if formula_str[i: i + 3] in self._operators:
-   self._formula.append(formula_str[i: i + 3])
-   i = i + 3
-if formula_str[i: i + 2] in self._operators:
-   self._formula.append(formula_str[i: i + 2])
-   i = i + 2
-if formula_str[i] in self._operators:
-   self._formula.append(formula_str[i])
+Потенциальные проблемы:
 
-* Можно использовать словарь для вычисления значения выражений функций
-Например:
-   {'cos' : cos(value)
-    'sin' : sin(value)
-    и тд.
-   }
+1) Неправильно проверяю ноль - 438 строка
+2) Не учитываю унарный минус
+3) Не могу посчитать короткие выражения
+
+Что делать?
+
+1) Попросить тесты у Кати
+2) Чекнуть префиксную нотацию на правильность
+3) Пофиксить баги
+4) Прогнать тесты Вари и Кати
+
+
+# first tests
+
+#test = Calculator('14+8+58+1+2')
+#test = Calculator('(14+8)-58/1*2')
+#test = Calculator('14+(8+(58+1)+2)')
+#test = Calculator('14^(8^58)+(1)+2h')
+#test = Calculator('4(14+8)-58/1*2')
+#test = Calculator('14g+(8+(58+1)+2)')
+#test = Calculator('14^(8^58)+(1)+2#')
+#test = Calculator('     ')
+#test = Calculator('(14+8)+5ymym8+1+2')
+#print('((14+8)+4,1*(2,8-e05888*pi)-58+-pi+(pi/0+2*9))'[18])
+#test = Calculator('pi*389+pi/(8)*2*sqrt(asin(cos(45)*cos(pi/78+9*pi/e-48*cos(48-159*sin(ln(tg(78)*e))))+cos(3*pi)*sin(pi) - ln(e))*e+cos(56)*256)+3*pi-e')
