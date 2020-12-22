@@ -44,20 +44,24 @@ class Calculator():
    def calculate(self):
 
       prefix_notation = self.split_prefix_notation(self.prefix_notation)
-      prefix_notation.print_to_console()
-      print('\n')
+      #prefix_notation.print_to_console()
+      #print('\n')
 
       stack = Stack()
       list_elem = prefix_notation.tail
 
       for _ in range(prefix_notation.get_size(), 0, -1):
 
-         if list_elem.value[0].isdigit() or list_elem.value == 'pi' or list_elem.value == 'e':
+         if list_elem.value == 'pi' or list_elem.value == 'e' or list_elem.value[0].isdigit() or list_elem.value == '-pi' or list_elem.value == '-e' or (list_elem.value[0] == '-' and len(list_elem.value) > 1 and not (str(self.functions.search(list_elem.value)).isdigit())):
 
             if list_elem.value == 'pi':
                stack.push(pi)
             elif list_elem.value == 'e':
                stack.push(e)
+            elif list_elem.value == '-pi':
+               stack.push(-pi)
+            elif list_elem.value == '-e':
+               stack.push(-e)
             else:
                stack.push(list_elem.value)
 
@@ -68,7 +72,6 @@ class Calculator():
                digit = stack.get_top()
                stack.pop()
                stack.push(self.function(list_elem.value, float(digit)))
-               print(stack.get_top())
 
             elif str(self.operators.search(list_elem.value)).isdigit():
 
@@ -78,7 +81,6 @@ class Calculator():
                stack.pop()
 
                stack.push(self.operation(float(digit_1) ,list_elem.value, float(digit_2)))
-               print(stack.get_top())
 
          list_elem = list_elem.prev
 
@@ -124,6 +126,36 @@ class Calculator():
 
       if function == 'asin': return asin(digit)
 
+      if function == '-cos': return -cos(digit)
+      if function == '-sin': return -sin(digit)
+
+      if function == '-tg': 
+         if cos(digit) == 0:
+            raise Exception('tgError: division by zero') 
+         return -tan(digit)
+
+      if function == '-ctg':
+         if sin(digit) == 0:
+            raise Exception('ctgError: division by zero') 
+         return -cos(digit)/sin(digit)
+
+      if function == '-ln':
+         if digit <= 0:
+            raise Exception('lnError: sub-logarithmic expression is zero') 
+         return -log1p(digit)
+
+      if function == '-log':
+         if digit <= 0:
+            raise Exception('logError: sub-logarithmic expression is zero') 
+         return -log2(digit)
+
+      if function == '-sqrt':
+         if digit < 0:
+            raise Exception('sqrtError: negative expression under the sqrt') 
+         return -sqrt(digit)
+
+      if function == '-asin': return -asin(digit)
+
    def prefix_conversion(self, formula_list):
       """
       Преобразование в префиксную форму записи 
@@ -138,7 +170,7 @@ class Calculator():
 
             stack.push(list_elem.value)
 
-         elif list_elem.value == 'pi' or list_elem.value == 'e' or list_elem.value[0].isdigit():
+         elif list_elem.value == 'pi' or list_elem.value == 'e' or list_elem.value[0].isdigit() or list_elem.value == '-pi' or list_elem.value == '-e' or (list_elem.value[0] == '-' and len(list_elem.value) > 1):
 
             if prefix_str == '':
                prefix_str = list_elem.value + prefix_str
@@ -227,7 +259,43 @@ class Calculator():
 
          elif str(self.operators.search(formula_str[i])).isdigit():
 
-            formula_array.push_back(formula_str[i])
+            ########################################################
+            if formula_str[i] == '-' and (str(self.operators.search(formula_str[i - 1])).isdigit() or i == 0):
+               if formula_str[i + 1].isdigit():
+                  i += 1
+                  digit_str = '-'
+
+                  while formula_str[i].isdigit() or formula_str[i] == ',' or formula_str[i] == '.':
+                     digit_str = digit_str + formula_str[i]
+                     i += 1
+                     if i > len(formula_str) - 1 : break
+
+                  shift = False
+                  formula_array.push_back(digit_str)
+
+               elif formula_str[i + 1] == 'e':
+                  formula_array.push_back('-e')
+                  shift = False
+                  i += 2
+               
+               elif formula_str[i + 1] == 'p':
+                  formula_array.push_back('-pi')
+                  shift = False
+                  i += 3
+
+               elif formula_str[i + 1].isalpha():
+                  
+                  i += 1
+                  for j in range(2, 5):
+                     if str(self.functions.search(formula_str[i: i + j])).isdigit():
+                        formula_array.push_back('-' + formula_str[i: i + j])
+                        break
+                     if i + j > len(formula_str) - 1: break
+                  
+                  shift = False
+                  i = i + j
+            ########################################################
+            else: formula_array.push_back(formula_str[i])
 
          elif formula_str[i] == 'e':
             
@@ -276,6 +344,14 @@ class Calculator():
       functions.push_back('log')
       functions.push_back('sqrt')
       functions.push_back('asin')
+      functions.push_back('-cos')
+      functions.push_back('-sin')
+      functions.push_back('-tg')
+      functions.push_back('-ctg')
+      functions.push_back('-ln')
+      functions.push_back('-log')
+      functions.push_back('-sqrt')
+      functions.push_back('-asin')
 
       return functions
    
@@ -285,6 +361,8 @@ class Calculator():
 
       constants.push_back('pi')
       constants.push_back('e')
+      constants.push_back('-pi')
+      constants.push_back('-e')
 
       return constants
 
@@ -293,7 +371,10 @@ class Calculator():
 
       for i in formula_str:
          if i != ' ':
-            str_without_spaces = str_without_spaces + i
+            if i == ',':
+               str_without_spaces = str_without_spaces + '.'
+            else:
+               str_without_spaces = str_without_spaces + i
       
       return str_without_spaces
 
@@ -480,18 +561,3 @@ class Calculator():
       
       if (open_brackets - close_brackets) == 0: pass
       else: raise Exception('BracketsError: more brackets on the left than on the right')
-
-
-#test = Calculator('((2+3)*4-(5-6))*(7+8)')
-#test = Calculator('sin(cos(2*3 - ln(e)*4))*5+2*6')
-#test = Calculator('sin(cos(2*3 - ln(3)*4))*5+2*6')
-#test = Calculator('(cos((1-(2+3))*4))^(5+6)')
-#test = Calculator('cos(3+5)')
-#test = Calculator('ln(23.1278*e)')#
-#test = Calculator('tg(log((log(23.1278 * 4))))')#
-#test = Calculator('cos(pi+1)*tg(log(ln(23.1278)))/13.0498+sin(3^7)')# - НЕ РАБОТАЕТ DigitError: invalid zero at 36 positions
-#test = Calculator('-8+(-5+(-6))')
-#test = Calculator('cos( pi) * tg( log(log(ln(23.1278* e))))  /   13.0498-sin(3^ 7)')
-
-print(test)
-print(test.calculate())
